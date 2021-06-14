@@ -7,16 +7,17 @@ import org.jose4j.jwk.JsonWebKey;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.lang.JoseException;
 
+import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.Base64;
+import java.security.Key;
 
 
-public class App {
-    public static void main(String[] args) throws JoseException, IOException, InterruptedException {
+class Samples {
+    public void jweSample() throws JoseException, IOException, InterruptedException {
         // An example showing the use of JSON Web Encryption (JWE) for LITE VAULT (iconloop)
 
         // Create a new Json Web Encryption object
@@ -32,8 +33,7 @@ public class App {
         // Set payload.
         JwtClaims claims = new JwtClaims();
         claims.setStringClaim("type", "BACKUP_REQUEST");
-//        claims.setIssuedAtToNow();
-        claims.setClaim("iat", 1623057440);
+        claims.setIssuedAtToNow();
         claims.setStringClaim("did", "issuer did of phone auth");
         senderJwe.setPayload(claims.toJson());
 
@@ -42,14 +42,8 @@ public class App {
         senderJwe.setEncryptionMethodHeaderParameter(ContentEncryptionAlgorithmIdentifiers.AES_128_GCM);
 
         String compactSerialization = senderJwe.getCompactSerialization();
-        byte[] cek = senderJwe.getContentEncryptionKey();
+        Key cek = new SecretKeySpec(senderJwe.getContentEncryptionKey(), "AESWrap");
         System.out.println("JWE compact serialization: " + compactSerialization);
-
-        // make jwk private key with cek.
-        String jwkCEKJson = "{\"kty\":\"oct\",\"k\":\"" + Base64.getEncoder().encodeToString(cek) + "\"}";
-        jwkCEKJson = jwkCEKJson.replaceAll("=", "");
-        JsonWebKey jwkCEK = JsonWebKey.Factory.newJwk(jwkCEKJson);
-        System.out.println("jwkCEKJson: " + jwkCEKJson);
 
         // Send Message as jwe_token to LV-Manager.
         HttpClient client = HttpClient.newHttpClient();
@@ -67,16 +61,21 @@ public class App {
         System.out.println("\nresponse: " + response_body);
 
         JsonWebEncryption receiverJwe = new JsonWebEncryption();
-        receiverJwe.setAlgorithmHeaderValue(KeyManagementAlgorithmIdentifiers.ECDH_ES_A128KW);
-        receiverJwe.setEncryptionMethodHeaderParameter(ContentEncryptionAlgorithmIdentifiers.AES_128_GCM);
+        receiverJwe.setKey(cek);
         receiverJwe.setCompactSerialization(response_body);
-        receiverJwe.setKey(jwkCEK.getKey());
 
         String plaintext = receiverJwe.getPlaintextString();
-        System.out.println("plaintext: " + plaintext);
+        System.out.println("\nplaintext: " + plaintext);
+    }
+}
+
+public class App {
+    public static void main(String[] args) throws Exception {
+        Samples samples = new Samples();
+        samples.jweSample();
     }
 
     public String getGreeting() {
-        return "Hello World!";
+        return "Hello LITE VAULT!";
     }
 }
