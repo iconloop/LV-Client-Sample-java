@@ -15,10 +15,15 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.security.Key;
 
+import iconloop.lab.util.JweClient;
+
 
 class Samples {
-    public void jweSample() throws JoseException, IOException, InterruptedException {
+    private final JweClient client;
+
+    public void jweLowLevelSample() throws JoseException, IOException, InterruptedException {
         // An example showing the use of JSON Web Encryption (JWE) for LITE VAULT (iconloop)
+        System.out.println("\n\n[ jweSample Run... ]");
 
         // Create a new Json Web Encryption object
         JsonWebEncryption senderJwe = new JsonWebEncryption();
@@ -67,12 +72,61 @@ class Samples {
         String plaintext = receiverJwe.getPlaintextString();
         System.out.println("\nplaintext: " + plaintext);
     }
+
+    public void backupRequest() throws JoseException, IOException, InterruptedException {
+        System.out.println("\n\n[ backupRequest Run... ]");
+
+        // Set payload.
+        JwtClaims claims = new JwtClaims();
+        claims.setStringClaim("type", "BACKUP_REQUEST");
+        claims.setIssuedAtToNow();
+        claims.setStringClaim("did", "issuer did of phone auth");
+        String payload = claims.toJson();
+        String response = this.client.sendMessage(payload);
+        System.out.println("response: " + response);
+    }
+
+    public void issueVid() {
+        System.out.println("\n\n[ issueVid Run... ]");
+
+    }
+
+    public void makeClue() {
+        System.out.println("\n\n[ makeClue Run... ]");
+
+    }
+
+    public void storeClue() {
+        System.out.println("\n\n[ storeClue Run... ]");
+
+    }
+
+    public void restoreData() {
+        System.out.println("\n\n[ restoreData Run... ]");
+
+    }
+
+    public void runAllSequence() throws JoseException, IOException, InterruptedException {
+        this.jweLowLevelSample();
+
+        this.backupRequest();
+    }
+
+    Samples() throws JoseException {
+        String liteVaultManagerServerUri = "lv-manager.iconscare.com";
+        String managerServerPublicKeyJson = "{\"crv\":\"P-256\",\"kty\":\"EC\"," +
+                "\"x\":\"PIXG56FTMW0P1UgW6c5lRwlPuTFmZXuwpPmhwS_oFH4\"," +
+                "\"y\":\"5BqfMR-NwN8JTBiIBzpmpFhVELiil17RUgfv7ci2ANs\"}";
+        JsonWebKey jwk = JsonWebKey.Factory.newJwk(managerServerPublicKeyJson);
+
+        this.client = new JweClient(liteVaultManagerServerUri, jwk.getKey());
+    }
 }
 
 public class App {
     public static void main(String[] args) throws Exception {
         Samples samples = new Samples();
-        samples.jweSample();
+        samples.runAllSequence();
     }
 
     public String getGreeting() {
