@@ -1,0 +1,46 @@
+{
+  "@context": ["http://vc.zzeung.id/credentials/v1.json"],
+  "id": "https://www.iconloop.com/vp/qnfdkqkd/123623",
+  "type": ["PresentationResponse"],
+  "fulfilledCriteria": {
+    "conditionId": "uuid-requisite-0000-1111-2222",
+    "verifiableCredential": "YXNzZGZhc2Zkc2ZkYXNhZmRzYWtsc2Fkamtsc2FsJ3NhZGxrO3N….",
+    "verifiableCredentialParam": {
+      "@context": [
+        "http://vc.zzeung.id/credentials/v1.json",
+        "http://vc.zzeung.id/credentials/mobile_authentication/kor/v1.json"
+      ],
+      "type": ["CredentialParam", "MobileAuthenticationKorCredential"],
+      "credentialParam": {
+        "claim": {
+          "name": {
+            "claimValue": "이제니",
+            "salt": "d1341c4b0cbff6bee9118da10d6e85a5"
+          },
+          "gender": {
+            "claimValue": "female",
+            "salt": "d1341c4b0cbff6bee9118da10d6e85a5"
+          },
+          "telco": {
+            "claimValue": "SKT",
+            "salt": "345341c4b0cbff6bee9118da10d6e85a5"
+          },
+          "phoneNumber": {
+            "claimValue": "01012345678",
+            "salt": "a1341c4b0cbff6bee9118da10d6e85a5"
+          },
+          "connectionInformation": {
+            "claimValue": "E21AEID0W6",
+            "salt": "b1341c4b0cbff6bee9118da10d6e85a5"
+          },
+          "birthDate": {
+            "claimValue": "1985-02-28",
+            "salt": "af341c4b0cbff6bee9118da10d6e85a5"
+          }
+        },
+        "proofType": "hash",
+        "hashAlgorithm": "SHA-256"
+      }
+    }
+  }
+}

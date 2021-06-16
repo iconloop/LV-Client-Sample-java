@@ -1,5 +1,9 @@
 package LV.Client.Sample.java;
 
+import iconloop.lab.util.JweClient;
+import org.jose4j.json.internal.json_simple.JSONObject;
+import org.jose4j.json.internal.json_simple.parser.JSONParser;
+import org.jose4j.json.internal.json_simple.parser.ParseException;
 import org.jose4j.jwe.ContentEncryptionAlgorithmIdentifiers;
 import org.jose4j.jwe.JsonWebEncryption;
 import org.jose4j.jwe.KeyManagementAlgorithmIdentifiers;
@@ -8,14 +12,15 @@ import org.jose4j.jwt.JwtClaims;
 import org.jose4j.lang.JoseException;
 
 import javax.crypto.spec.SecretKeySpec;
+import java.io.FileReader;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.Key;
-
-import iconloop.lab.util.JweClient;
 
 
 class Samples {
@@ -86,9 +91,23 @@ class Samples {
         System.out.println("response: " + response);
     }
 
-    public void issueVid() {
+    public void issueVid() throws IOException, JoseException, InterruptedException, ParseException {
         System.out.println("\n\n[ issueVid Run... ]");
 
+        // load VP
+        Path currentRelativePath = Paths.get("sample_vp.json");
+        String vpPath = currentRelativePath.toAbsolutePath().toString();
+        JSONParser parser = new JSONParser();
+        JSONObject vpJsonObj = (JSONObject) parser.parse(new FileReader(vpPath));
+
+        // Set payload.
+        JwtClaims claims = new JwtClaims();
+        claims.setStringClaim("type", "ISSUE_VID_REQUEST");
+        claims.setIssuedAtToNow();
+        claims.setClaim("vp", vpJsonObj);
+        String payload = claims.toJson();
+        String response = this.client.sendMessage(payload);
+        System.out.println("response: " + response);
     }
 
     public void makeClue() {
@@ -106,10 +125,11 @@ class Samples {
 
     }
 
-    public void runAllSequence() throws JoseException, IOException, InterruptedException {
+    public void runAllSequence() throws Exception {
         this.jweLowLevelSample();
 
         this.backupRequest();
+        this.issueVid();
     }
 
     Samples() throws JoseException {
