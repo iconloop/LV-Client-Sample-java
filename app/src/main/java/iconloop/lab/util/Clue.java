@@ -14,16 +14,12 @@ public class Clue {
     private static final String recoveryKey = "f660911567e08de702b01a819a2d1572";
     private static final SecretKey _recoveryKey = new SecretKeySpec(recoveryKey.getBytes(), "AES");;
 
-    public String[] makeClue(int N, int T, byte[] data) {
-        SecretSharing ss = new SecretSharing(new SecureRandom(), N, T);
+    public String[] makeClue(int storageNumber, int threshold, byte[] data) throws InvalidCipherTextException {
+        SecretSharing ss = new SecretSharing(new SecureRandom(), storageNumber, threshold);
         byte[][] clues = ss.split(data);
-        String[] out = new String[N];
-        for(int i=0; i<N; i++) {
-            try {
-                out[i] = encryptData(clues[i]);
-            } catch (InvalidCipherTextException e) {
-                System.out.println("encrypt fail(" + e.getMessage() + ")");
-            }
+        String[] out = new String[storageNumber];
+        for(int i=0; i<storageNumber; i++) {
+            out[i] = encryptData(clues[i]);
         }
         return out;
     }

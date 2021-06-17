@@ -1,6 +1,8 @@
 package LV.Client.Sample.java;
 
+import iconloop.lab.util.Clue;
 import iconloop.lab.util.JweClient;
+import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.jose4j.json.internal.json_simple.JSONObject;
 import org.jose4j.json.internal.json_simple.parser.JSONParser;
 import org.jose4j.json.internal.json_simple.parser.ParseException;
@@ -18,9 +20,11 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.Key;
+import java.util.Arrays;
 
 
 class Samples {
@@ -110,9 +114,16 @@ class Samples {
         System.out.println("response: " + response);
     }
 
-    public void makeClue() {
+    public String[] makeClue() throws InvalidCipherTextException {
         System.out.println("\n\n[ makeClue Run... ]");
 
+        Clue clue = new Clue();
+        int storageNumber = 3;
+        int threshold = 2;
+        String secret = "Sample Secret Data";
+        String[] clues = clue.makeClue(storageNumber, threshold, secret.getBytes(StandardCharsets.UTF_8));
+        System.out.println("clues: " + Arrays.toString(clues));
+        return clues;
     }
 
     public void storeClue() {
@@ -130,6 +141,7 @@ class Samples {
 
         this.backupRequest();
         this.issueVid();
+        String[] clues = this.makeClue();
     }
 
     Samples() throws JoseException {
