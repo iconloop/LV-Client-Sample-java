@@ -169,9 +169,32 @@ class Samples {
         System.out.println("Storages(with token): " + this.storages.get("storages").toString());
     }
 
-    public void storeClue() {
+    public void storeClue(String[] clues) throws JoseException, IOException, InterruptedException {
         System.out.println("\n\n[ storeClue Run... ]");
 
+        JSONArray storageArray = (JSONArray)this.storages.get("storages");
+
+        int clue_index = 0;
+        for (Object obj : storageArray) {
+            JSONObject storage = (JSONObject) obj;
+
+            // JWE client for Storage Server.
+            JsonWebKey jwk = JsonWebKey.Factory.newJwk(storage.get("key").toString());
+            JweClient client = new JweClient(storage.get("target").toString(), jwk.getKey());
+
+            // Set payload.
+            JwtClaims claims = new JwtClaims();
+            claims.setStringClaim("type", "STORE_REQUEST");
+            claims.setIssuedAtToNow();
+            claims.setStringClaim("vID", this.storages.get("vID").toString());
+            claims.setClaim("clue", clues[clue_index]);
+            String payload = claims.toJson();
+            String response = client.sendMessage(payload);
+            System.out.println("payload: " + payload);
+            System.out.println("response: " + response);
+
+            clue_index++;
+        }
     }
 
     public void restoreData() {
@@ -186,6 +209,7 @@ class Samples {
         this.issueVid();
         String[] clues = this.makeClue();
         this.tokenRequest();
+        this.storeClue(clues);
     }
 
     Samples() throws JoseException {
