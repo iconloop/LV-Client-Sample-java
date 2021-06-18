@@ -3,6 +3,7 @@ package LV.Client.Sample.java;
 import iconloop.lab.util.Clue;
 import iconloop.lab.util.JweClient;
 import org.bouncycastle.crypto.InvalidCipherTextException;
+import org.jose4j.json.internal.json_simple.JSONArray;
 import org.jose4j.json.internal.json_simple.JSONObject;
 import org.jose4j.json.internal.json_simple.parser.JSONParser;
 import org.jose4j.json.internal.json_simple.parser.ParseException;
@@ -29,10 +30,19 @@ import java.util.Arrays;
 
 class Samples {
     private final JweClient client;
+    private JSONObject storages;
+
+    private JSONObject loadVP() throws IOException, ParseException {
+        // load VP
+        Path currentRelativePath = Paths.get("sample_vp.json");
+        String vpPath = currentRelativePath.toAbsolutePath().toString();
+        JSONParser parser = new JSONParser();
+        return (JSONObject) parser.parse(new FileReader(vpPath));
+    }
 
     public void jweLowLevelSample() throws JoseException, IOException, InterruptedException {
         // An example showing the use of JSON Web Encryption (JWE) for LITE VAULT (iconloop)
-        System.out.println("\n\n[ jweSample Run... ]");
+        System.out.println("\n\n[ jweLowLevelSample Run... ]");
 
         // Create a new Json Web Encryption object
         JsonWebEncryption senderJwe = new JsonWebEncryption();
@@ -98,20 +108,17 @@ class Samples {
     public void issueVid() throws IOException, JoseException, InterruptedException, ParseException {
         System.out.println("\n\n[ issueVid Run... ]");
 
-        // load VP
-        Path currentRelativePath = Paths.get("sample_vp.json");
-        String vpPath = currentRelativePath.toAbsolutePath().toString();
-        JSONParser parser = new JSONParser();
-        JSONObject vpJsonObj = (JSONObject) parser.parse(new FileReader(vpPath));
-
         // Set payload.
         JwtClaims claims = new JwtClaims();
         claims.setStringClaim("type", "ISSUE_VID_REQUEST");
         claims.setIssuedAtToNow();
-        claims.setClaim("vp", vpJsonObj);
+        claims.setClaim("vp", this.loadVP());
         String payload = claims.toJson();
         String response = this.client.sendMessage(payload);
         System.out.println("response: " + response);
+
+        JSONParser parser = new JSONParser();
+        this.storages = (JSONObject) parser.parse(response);
     }
 
     public String[] makeClue() throws InvalidCipherTextException {
@@ -124,6 +131,42 @@ class Samples {
         String[] clues = clue.makeClue(storageNumber, threshold, secret.getBytes(StandardCharsets.UTF_8));
         System.out.println("clues: " + Arrays.toString(clues));
         return clues;
+    }
+
+    public void tokenRequest() throws IOException, ParseException, JoseException, InterruptedException {
+        System.out.println("\n\n[ tokenRequest Run... ]");
+
+        System.out.println("Storages: " + this.storages.get("storages").toString());
+        JSONArray storageArray = (JSONArray)this.storages.get("storages");
+        JSONArray newStorageArray = new JSONArray();
+
+        for (Object obj : storageArray) {
+            JSONObject storage = (JSONObject) obj;
+            System.out.println("Storage: " + storage.toString());
+
+            // JWE client for Storage Server.
+            JsonWebKey jwk = JsonWebKey.Factory.newJwk(storage.get("key").toString());
+            JweClient client = new JweClient(storage.get("target").toString(), jwk.getKey());
+
+            // Set payload.
+            JwtClaims claims = new JwtClaims();
+            claims.setStringClaim("type", "TOKEN_REQUEST");
+            claims.setIssuedAtToNow();
+            claims.setStringClaim("vID", this.storages.get("vID").toString());
+            claims.setClaim("vp", this.loadVP());
+            String payload = claims.toJson();
+            String response = client.sendMessage(payload);
+            System.out.println("response: " + response);
+
+            JSONParser parser = new JSONParser();
+            JSONObject storageToken = (JSONObject) parser.parse(response);
+
+            storage.put("token", storageToken.get("token").toString());
+            newStorageArray.add(storage);
+        }
+
+        this.storages.put("storages", newStorageArray);
+        System.out.println("Storages(with token): " + this.storages.get("storages").toString());
     }
 
     public void storeClue() {
@@ -142,6 +185,7 @@ class Samples {
         this.backupRequest();
         this.issueVid();
         String[] clues = this.makeClue();
+        this.tokenRequest();
     }
 
     Samples() throws JoseException {
