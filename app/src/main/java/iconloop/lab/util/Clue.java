@@ -33,7 +33,7 @@ public class Clue {
         return Utils.encodeToBase64UrlSafeString(output);
     }
 
-    public byte[] reconstruct(int N, int T, String[] encClues) {
+    public byte[] reconstruct(int storageNumber, int threshold, String[] encClues) {
         byte[][] shares = new byte[encClues.length][];
         for(int i=0; i< encClues.length; i++) {
             try {
@@ -42,7 +42,7 @@ public class Clue {
                 System.out.println("decrypt fail(" + e.getMessage() + ")");
             }
         }
-        SecretSharing ss = new SecretSharing(new SecureRandom(), N, T);
+        SecretSharing ss = new SecretSharing(new SecureRandom(), storageNumber, threshold);
         return ss.reconstruct(shares);
     }
 

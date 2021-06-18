@@ -1,4 +1,4 @@
-package LV.Client.Sample.java;
+package litevault.sample;
 
 import iconloop.lab.util.Clue;
 import iconloop.lab.util.JweClient;
@@ -123,14 +123,13 @@ class Samples {
         this.storages = (JSONObject) parser.parse(response);
     }
 
-    public String[] makeClue() throws InvalidCipherTextException {
+    public String[] makeClue(String data) throws InvalidCipherTextException {
         System.out.println("\n\n[ makeClue Run... ]");
 
         Clue clue = new Clue();
         int storageNumber = 3;
         int threshold = 2;
-        String secret = "Sample Secret Data";
-        String[] clues = clue.makeClue(storageNumber, threshold, secret.getBytes(StandardCharsets.UTF_8));
+        String[] clues = clue.makeClue(storageNumber, threshold, data.getBytes(StandardCharsets.UTF_8));
         System.out.println("clues: " + Arrays.toString(clues));
         return clues;
     }
@@ -230,22 +229,35 @@ class Samples {
         return clues.toArray(new String[0]);
     }
 
-    public void restoreData() {
+    public String restoreData(String[] clues) {
         System.out.println("\n\n[ restoreData Run... ]");
 
+        Clue clue = new Clue();
+        int storageNumber = 3;
+        int threshold = 2;
+
+        String reconstructedStr = new String(clue.reconstruct(storageNumber, threshold, clues), StandardCharsets.UTF_8);
+        System.out.println("reconstructedStr: " + reconstructedStr);
+
+        return reconstructedStr;
     }
 
     public void runAllSequence() throws Exception {
         this.jweLowLevelSample();
 
+        String secret = "Sample Secret Data";
         this.backupRequest();
         this.issueVid();
-        String[] clues = this.makeClue();
+        String[] clues = this.makeClue(secret);
         this.tokenRequest();
         this.storeClue(clues);
         String[] cluesFromStorage = this.clueRequest();
         if (!Arrays.equals(clues, cluesFromStorage)) {
             System.out.println("clueRequest Fail!");
+        }
+        String secretFromStorage = this.restoreData(cluesFromStorage);
+        if (!secret.equals(secretFromStorage)) {
+            System.out.println("restoreData Fail!");
         }
     }
 

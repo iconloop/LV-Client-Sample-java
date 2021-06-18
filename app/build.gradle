@@ -36,5 +36,5 @@ dependencies {
 
 application {
     // Define the main class for the application.
-    mainClass = 'LV.Client.Sample.java.App'
+    mainClass = 'litevault.sample.App'
 }
