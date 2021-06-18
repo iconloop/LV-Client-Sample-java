@@ -25,7 +25,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.Key;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 
 class Samples {
@@ -197,6 +199,37 @@ class Samples {
         }
     }
 
+    public String[] clueRequest() throws JoseException, IOException, InterruptedException, ParseException {
+        System.out.println("\n\n[ clueRequest Run... ]");
+
+        JSONArray storageArray = (JSONArray)this.storages.get("storages");
+
+        List<String> clues = new ArrayList<String>();
+        for (Object obj : storageArray) {
+            JSONObject storage = (JSONObject) obj;
+            System.out.println("Storage: " + storage.toString());
+
+            // JWE client for Storage Server.
+            JsonWebKey jwk = JsonWebKey.Factory.newJwk(storage.get("key").toString());
+            JweClient client = new JweClient(storage.get("target").toString(), jwk.getKey());
+
+            // Set payload.
+            JwtClaims claims = new JwtClaims();
+            claims.setStringClaim("type", "CLUE_REQUEST");
+            claims.setIssuedAtToNow();
+            claims.setStringClaim("vID", this.storages.get("vID").toString());
+            String payload = claims.toJson();
+            String response = client.sendMessage(payload);
+            System.out.println("response: " + response);
+
+            JSONParser parser = new JSONParser();
+            JSONObject storageClue = (JSONObject) parser.parse(response);
+
+            clues.add(storageClue.get("clue").toString());
+        }
+        return clues.toArray(new String[0]);
+    }
+
     public void restoreData() {
         System.out.println("\n\n[ restoreData Run... ]");
 
@@ -210,6 +243,10 @@ class Samples {
         String[] clues = this.makeClue();
         this.tokenRequest();
         this.storeClue(clues);
+        String[] cluesFromStorage = this.clueRequest();
+        if (!Arrays.equals(clues, cluesFromStorage)) {
+            System.out.println("clueRequest Fail!");
+        }
     }
 
     Samples() throws JoseException {
