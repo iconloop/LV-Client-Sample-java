@@ -32,6 +32,9 @@ dependencies {
     // For Lite Vault Library
     implementation 'org.bouncycastle:bcprov-jdk15on:1.64'
     implementation 'com.google.code.gson:gson:2.8.6'
+
+    // load lite vault SDK
+    implementation fileTree(dir: 'lib', includes: ['*.jar'])
 }
 
 application {
