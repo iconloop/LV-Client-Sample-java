@@ -126,7 +126,7 @@ class Samples {
     public String[] makeClue(String data) throws InvalidCipherTextException {
         System.out.println("\n\n[ makeClue Run... ]");
 
-        Clue clue = new Clue();
+        Clue clue = new Clue(this.storages.get("recovery_key").toString());
         int storageNumber = 3;
         int threshold = 2;
         String[] clues = clue.makeClue(storageNumber, threshold, data.getBytes(StandardCharsets.UTF_8));
@@ -232,7 +232,7 @@ class Samples {
     public String restoreData(String[] clues) {
         System.out.println("\n\n[ restoreData Run... ]");
 
-        Clue clue = new Clue();
+        Clue clue = new Clue(this.storages.get("recovery_key").toString());
         int storageNumber = 3;
         int threshold = 2;
 
