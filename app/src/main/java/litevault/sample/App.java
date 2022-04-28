@@ -64,7 +64,7 @@ class Samples {
         senderJwe.setPayload(claims.toJson());
 
         // Set alg, enc values of the JWE header.
-        senderJwe.setAlgorithmHeaderValue(KeyManagementAlgorithmIdentifiers.ECDH_ES_A128KW);
+        senderJwe.setAlgorithmHeaderValue(KeyManagementAlgorithmIdentifiers.ECDH_ES);
         senderJwe.setEncryptionMethodHeaderParameter(ContentEncryptionAlgorithmIdentifiers.AES_128_GCM);
 
         String compactSerialization = senderJwe.getCompactSerialization();
@@ -188,6 +188,8 @@ class Samples {
             claims.setStringClaim("type", "STORE_REQUEST");
             claims.setIssuedAtToNow();
             claims.setStringClaim("vID", this.storages.get("vID").toString());
+            claims.setStringClaim("token", storage.get("token").toString());
+            claims.setStringClaim("tag", "tag_0");
             claims.setClaim("clue", clues[clue_index]);
             String payload = claims.toJson();
             String response = client.sendMessage(payload);
@@ -217,6 +219,8 @@ class Samples {
             claims.setStringClaim("type", "CLUE_REQUEST");
             claims.setIssuedAtToNow();
             claims.setStringClaim("vID", this.storages.get("vID").toString());
+            claims.setStringClaim("token", storage.get("token").toString());
+            claims.setStringClaim("tag", "tag_0");
             String payload = claims.toJson();
             String response = client.sendMessage(payload);
             System.out.println("response: " + response);
