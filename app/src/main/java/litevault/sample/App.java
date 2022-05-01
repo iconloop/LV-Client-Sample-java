@@ -64,7 +64,7 @@ class Samples {
         senderJwe.setPayload(claims.toJson());
 
         // Set alg, enc values of the JWE header.
-        senderJwe.setAlgorithmHeaderValue(KeyManagementAlgorithmIdentifiers.ECDH_ES_A128KW);
+        senderJwe.setAlgorithmHeaderValue(KeyManagementAlgorithmIdentifiers.ECDH_ES);
         senderJwe.setEncryptionMethodHeaderParameter(ContentEncryptionAlgorithmIdentifiers.AES_128_GCM);
 
         String compactSerialization = senderJwe.getCompactSerialization();
@@ -126,7 +126,9 @@ class Samples {
     public String[] makeClue(String data) throws InvalidCipherTextException {
         System.out.println("\n\n[ makeClue Run... ]");
 
-        Clue clue = new Clue(this.storages.get("recovery_key").toString());
+        // Clue clue = new Clue(this.storages.get("recovery_key").toString());
+        // LITE VAULT 에서는 App 에서 생성한 임의의 동일한 recovery_key 를 사용 한다.
+        Clue clue = new Clue("6ffda2012460a0bd2f61f133b747ed6a");
         int storageNumber = 3;
         int threshold = 2;
         String[] clues = clue.makeClue(storageNumber, threshold, data.getBytes(StandardCharsets.UTF_8));
@@ -170,7 +172,7 @@ class Samples {
         System.out.println("Storages(with token): " + this.storages.get("storages").toString());
     }
 
-    public void storeClue(String[] clues) throws JoseException, IOException, InterruptedException {
+    public void storeClue(String[] clues, String tag) throws JoseException, IOException, InterruptedException {
         System.out.println("\n\n[ storeClue Run... ]");
 
         JSONArray storageArray = (JSONArray)this.storages.get("storages");
@@ -188,6 +190,8 @@ class Samples {
             claims.setStringClaim("type", "STORE_REQUEST");
             claims.setIssuedAtToNow();
             claims.setStringClaim("vID", this.storages.get("vID").toString());
+            claims.setStringClaim("token", storage.get("token").toString());
+            claims.setStringClaim("tag", tag);
             claims.setClaim("clue", clues[clue_index]);
             String payload = claims.toJson();
             String response = client.sendMessage(payload);
@@ -198,7 +202,7 @@ class Samples {
         }
     }
 
-    public String[] clueRequest() throws JoseException, IOException, InterruptedException, ParseException {
+    public String[] clueRequest(String tag) throws JoseException, IOException, InterruptedException, ParseException {
         System.out.println("\n\n[ clueRequest Run... ]");
 
         JSONArray storageArray = (JSONArray)this.storages.get("storages");
@@ -217,6 +221,8 @@ class Samples {
             claims.setStringClaim("type", "CLUE_REQUEST");
             claims.setIssuedAtToNow();
             claims.setStringClaim("vID", this.storages.get("vID").toString());
+            claims.setStringClaim("token", storage.get("token").toString());
+            claims.setStringClaim("tag", tag);
             String payload = claims.toJson();
             String response = client.sendMessage(payload);
             System.out.println("response: " + response);
@@ -232,7 +238,9 @@ class Samples {
     public String restoreData(String[] clues) {
         System.out.println("\n\n[ restoreData Run... ]");
 
-        Clue clue = new Clue(this.storages.get("recovery_key").toString());
+        // Clue clue = new Clue(this.storages.get("recovery_key").toString());
+        // LITE VAULT 에서는 App 에서 생성한 임의의 동일한 recovery_key 를 사용 한다.
+        Clue clue = new Clue("6ffda2012460a0bd2f61f133b747ed6a");
         int storageNumber = 3;
         int threshold = 2;
 
@@ -245,20 +253,40 @@ class Samples {
     public void runAllSequence() throws Exception {
         this.jweLowLevelSample();
 
+        // clue 로 분해할 원본 secret
         String secret = "Sample Secret Data";
+
+        // VPR
         this.backupRequest();
+
+        // VID
         this.issueVid();
+
+        // secret 을 clues 로 분해 한다. clue 는 LV-Manager 로 부터 받은 recovery-key 로 추가 암호화 진행을 하므로
+        // secret 의 clues 분해는 VID 이후에 진행 한다.
         String[] clues = this.makeClue(secret);
+
+        // TOKEN
         this.tokenRequest();
-        this.storeClue(clues);
-        String[] cluesFromStorage = this.clueRequest();
+
+        // STORE with tag
+        this.storeClue(clues, "tag_000");
+
+        // READ with tag
+        String[] cluesFromStorage = this.clueRequest("tag_000");
         if (!Arrays.equals(clues, cluesFromStorage)) {
             System.out.println("clueRequest Fail!");
         }
+
+        // clue 를 원본 secret 으로 복원 한다.
         String secretFromStorage = this.restoreData(cluesFromStorage);
         if (!secret.equals(secretFromStorage)) {
             System.out.println("restoreData Fail!");
         }
+
+        System.out.println("\n\n[ End of runAllSequence ]");
+        System.out.println("Original secret: " + secret);
+        System.out.println("Restored secret: " + secretFromStorage);
     }
 
     Samples() throws JoseException {
