@@ -28,6 +28,7 @@ import java.security.Key;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 
 
 class Samples {
@@ -289,6 +290,54 @@ class Samples {
         System.out.println("Restored secret: " + secretFromStorage);
     }
 
+    public void multiTagSample() throws Exception {
+        // tag 별 원본 secret
+        String secret_tag1 = "Secret Data 123";
+        String secret_tag2 = "Sample Secret Data ABC";
+        String secret_tag3 = "Data SECRET";
+
+        // VPR, VID, TOKEN and STORE for tag1
+        this.backupRequest();
+        this.issueVid();
+        String[] clues1 = this.makeClue(secret_tag1);
+        this.tokenRequest();
+        this.storeClue(clues1, "tag_1");
+
+        // VPR, VID, TOKEN and STORE for tag2
+        this.backupRequest();
+        this.issueVid();
+        String[] clues2 = this.makeClue(secret_tag2);
+        this.tokenRequest();
+        this.storeClue(clues2, "tag_2");
+
+        // VPR, VID, TOKEN and STORE for tag3
+        this.backupRequest();
+        this.issueVid();
+        String[] clues3 = this.makeClue(secret_tag3);
+        this.tokenRequest();
+        this.storeClue(clues3, "tag_3");
+
+
+        // VPR, VID, TOKEN and READ with tag(random 1 to 3)
+        this.backupRequest();
+        this.issueVid();
+        this.tokenRequest();
+        int random_tag_num = new Random().nextInt(2) + 1;
+        String random_tag = "tag_" + random_tag_num;
+        // READ with tag
+        String[] cluesFromStorage = this.clueRequest(random_tag);
+        // clue 를 원본 secret 으로 복원 한다.
+        String secretFromStorage = this.restoreData(cluesFromStorage);
+
+        System.out.println("\n\n[ Multi Tag Sample ]");
+        System.out.println("Original secret tag_1: " + secret_tag1);
+        System.out.println("Original secret tag_2: " + secret_tag2);
+        System.out.println("Original secret tag_3: " + secret_tag3);
+
+        System.out.println("Random Tag: " + random_tag);
+        System.out.println("Restored secret: " + secretFromStorage);
+    }
+
     Samples() throws JoseException {
         String liteVaultManagerServerUri = "lv-manager.iconscare.com";
         String managerServerPublicKeyJson = "{\"crv\":\"P-256\",\"kty\":\"EC\"," +
@@ -304,6 +353,7 @@ public class App {
     public static void main(String[] args) throws Exception {
         Samples samples = new Samples();
         samples.runAllSequence();
+        samples.multiTagSample();
     }
 
     public String getGreeting() {
