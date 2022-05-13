@@ -125,13 +125,16 @@ class Samples {
     }
 
     public String[] makeClue(String data) throws InvalidCipherTextException {
+        // LITE VAULT testbed is currently running only 3 storage servers. Threshold must be greater than or equal to 2.
+        return this.makeClue(data, 3, 2);
+    }
+
+    public String[] makeClue(String data, int storageNumber, int threshold) throws InvalidCipherTextException {
         System.out.println("\n\n[ makeClue Run... ]");
 
         // Clue clue = new Clue(this.storages.get("recovery_key").toString());
         // LITE VAULT 에서는 App 에서 생성한 임의의 동일한 recovery_key 를 사용 한다.
         Clue clue = new Clue("6ffda2012460a0bd2f61f133b747ed6a");
-        int storageNumber = 3;
-        int threshold = 2;
         String[] clues = clue.makeClue(storageNumber, threshold, data.getBytes(StandardCharsets.UTF_8));
         System.out.println("clues: " + Arrays.toString(clues));
         return clues;
@@ -237,14 +240,16 @@ class Samples {
     }
 
     public String restoreData(String[] clues) {
+        // LITE VAULT testbed is currently running only 3 storage servers. Threshold must be greater than or equal to 2.
+        return this.restoreData(clues, 3, 2);
+    }
+
+    public String restoreData(String[] clues, int storageNumber, int threshold) {
         System.out.println("\n\n[ restoreData Run... ]");
 
         // Clue clue = new Clue(this.storages.get("recovery_key").toString());
         // LITE VAULT 에서는 App 에서 생성한 임의의 동일한 recovery_key 를 사용 한다.
         Clue clue = new Clue("6ffda2012460a0bd2f61f133b747ed6a");
-        int storageNumber = 3;
-        int threshold = 2;
-
         String reconstructedStr = new String(clue.reconstruct(storageNumber, threshold, clues), StandardCharsets.UTF_8);
         System.out.println("reconstructedStr: " + reconstructedStr);
 
@@ -338,6 +343,31 @@ class Samples {
         System.out.println("Restored secret: " + secretFromStorage);
     }
 
+    public void MakeClueWithStorageNumber() throws Exception {
+        // 테스트베드의 스토리지 서버가 3개뿐이므로 clue 를 5개로 쪼개고 임계값을 3으로 설정하여
+        // 임계값 내의 clue 만 저장한 다음 복원하는 테스트입니다.
+
+        String secret = "Secret Data for 5 clues and 3 threshold!";
+
+        // VPR, VID, TOKEN and Make clues with storageNumber = 5, threshold = 3
+        this.backupRequest();
+        this.issueVid();
+        String[] clues = this.makeClue(secret, 5, 3);
+        this.tokenRequest();
+        // storageArray 크기인 3까지만 저장이 된다. 나머지 clue 는 저장되지 않지만 임계점 내이므로 복원이 가능하다.
+        this.storeClue(clues, "tag_storageNumTest");
+
+        // READ with tag
+        String[] cluesFromStorage = this.clueRequest("tag_storageNumTest");
+        // clue 를 원본 secret 으로 복원 한다.
+        String secretFromStorage = this.restoreData(cluesFromStorage, 5, 3);
+
+        System.out.println("\n\n[ Make Clue With StorageNumber 5 but Threshold 3]");
+        System.out.println("Clues length is " + clues.length);
+        System.out.println("But cluesFromStorage length is " + cluesFromStorage.length);
+        System.out.println("And Restored secret: " + secretFromStorage);
+    }
+
     Samples() throws JoseException {
         String liteVaultManagerServerUri = "lv-manager.iconscare.com";
         String managerServerPublicKeyJson = "{\"crv\":\"P-256\",\"kty\":\"EC\"," +
@@ -354,6 +384,7 @@ public class App {
         Samples samples = new Samples();
         samples.runAllSequence();
         samples.multiTagSample();
+        samples.MakeClueWithStorageNumber();
     }
 
     public String getGreeting() {
