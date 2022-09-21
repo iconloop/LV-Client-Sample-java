@@ -37,10 +37,10 @@ class Samples {
 
     private JSONObject loadVP() throws IOException, ParseException {
         // load VP
-        Path currentRelativePath = Paths.get("sample_vp.json");
-        String vpPath = currentRelativePath.toAbsolutePath().toString();
+        String userId = "abc@korea.com";
+        String pin = "abc%%111";
         JSONParser parser = new JSONParser();
-        return (JSONObject) parser.parse(new FileReader(vpPath));
+        return (JSONObject) parser.parse(client.makeUserParamVP(userId, pin));
     }
 
     public void jweLowLevelSample() throws JoseException, IOException, InterruptedException {
