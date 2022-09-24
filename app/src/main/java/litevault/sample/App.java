@@ -15,15 +15,8 @@ import org.jose4j.jwt.JwtClaims;
 import org.jose4j.lang.JoseException;
 
 import javax.crypto.spec.SecretKeySpec;
-import java.io.FileReader;
 import java.io.IOException;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.Key;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -73,18 +66,7 @@ class Samples {
         System.out.println("JWE compact serialization: " + compactSerialization);
 
         // Send Message as jwe_token to LV-Manager.
-        HttpClient client = HttpClient.newHttpClient();
-
-        // Create HTTP request object
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create("http://lv-manager.iconscare.com/vault"))
-                .POST(HttpRequest.BodyPublishers.noBody())
-                .header("Authorization", compactSerialization)
-                .build();
-
-        // Send HTTP request
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        String response_body = response.body().replaceAll("\"", "");
+        String response_body = this.client.sendHttpRequest(compactSerialization);
         System.out.println("\nresponse: " + response_body);
 
         JsonWebEncryption receiverJwe = new JsonWebEncryption();
