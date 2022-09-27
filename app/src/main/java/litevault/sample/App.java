@@ -118,7 +118,7 @@ class Samples {
         // LITE VAULT 에서는 App 에서 생성한 임의의 동일한 recovery_key 를 사용 한다.
         Clue clue = new Clue("6ffda2012460a0bd2f61f133b747ed6a");
         String[] clues = clue.makeClue(storageNumber, threshold, data.getBytes(StandardCharsets.UTF_8));
-        System.out.println("clues: " + Arrays.toString(clues));
+//        System.out.println("clues: " + Arrays.toString(clues));
         return clues;
     }
 
@@ -181,8 +181,8 @@ class Samples {
             claims.setClaim("clue", clues[clue_index]);
             String payload = claims.toJson();
             String response = client.sendMessage(payload);
-            System.out.println("payload: " + payload);
-            System.out.println("response: " + response);
+//            System.out.println("payload: " + payload);
+//            System.out.println("response: " + response);
 
             clue_index++;
         }
@@ -211,7 +211,7 @@ class Samples {
             claims.setStringClaim("tag", tag);
             String payload = claims.toJson();
             String response = client.sendMessage(payload);
-            System.out.println("response: " + response);
+//            System.out.println("response: " + response);
 
             JSONParser parser = new JSONParser();
             JSONObject storageClue = (JSONObject) parser.parse(response);
@@ -233,16 +233,25 @@ class Samples {
         // LITE VAULT 에서는 App 에서 생성한 임의의 동일한 recovery_key 를 사용 한다.
         Clue clue = new Clue("6ffda2012460a0bd2f61f133b747ed6a");
         String reconstructedStr = new String(clue.reconstruct(storageNumber, threshold, clues), StandardCharsets.UTF_8);
-        System.out.println("reconstructedStr: " + reconstructedStr);
+//        System.out.println("reconstructedStr: " + reconstructedStr);
 
         return reconstructedStr;
+    }
+
+    private static String createDataSize(int msgSize) {
+        StringBuilder sb = new StringBuilder(msgSize);
+        for (int i=0; i<msgSize; i++) {
+            sb.append('a');
+        }
+        return sb.toString();
     }
 
     public void runAllSequence() throws Exception {
         this.jweLowLevelSample();
 
         // clue 로 분해할 원본 secret
-        String secret = "Sample Secret Data";
+//        String secret = "Sample Secret Data";
+        String secret = createDataSize(1024 * 1024 * 4);
 
         // VPR
         this.backupRequest();
@@ -273,8 +282,9 @@ class Samples {
         }
 
         System.out.println("\n\n[ End of runAllSequence ]");
-        System.out.println("Original secret: " + secret);
-        System.out.println("Restored secret: " + secretFromStorage);
+//        System.out.println("Original secret: " + secret);
+//        System.out.println("Restored secret: " + secretFromStorage);
+        System.out.println("Original secret matches to Restored secret: " + secret.equals(secretFromStorage));
     }
 
     public void multiTagSample() throws Exception {
